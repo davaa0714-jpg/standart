@@ -5,6 +5,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { StatusPill, TypeTag, ProgressBar } from '@/components/ui/Badges'
 import { ExportButton } from '@/components/export/ExportButton'
 import { StaffStatTable } from '@/components/tasks/StaffStatTable'
+import { CompletionSubmitModal } from '@/components/tasks/CompletionSubmitModal'
 import { TaskMiniList } from '@/components/tasks/TaskMiniList'
 import type { TaskFull, Profile, TaskStatus } from '@/types/database'
 
@@ -40,7 +41,11 @@ export default async function BiyeleltPage() {
           <h1 className="text-xl font-bold">{canManage ? 'Багийн биелэлт' : 'Миний биелэлт'}</h1>
           <p className="text-sm text-tx2 mt-0.5">{canManage ? 'Бүх ажилтны биелэлтийг харах' : 'Танд хариуцсан үүрэг биелэлт'}</p>
         </div>
-        {canManage && tasks && <ExportButton tasks={tasks} title="Биелэлтийн тайлан" />}
+        {canManage ? (
+          <ExportButton tasks={tasks} title="Биелэлтийн тайлан" />
+        ) : (
+          <CompletionSubmitModal tasks={typedTasks} />
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">

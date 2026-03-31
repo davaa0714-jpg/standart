@@ -26,14 +26,15 @@ export default async function AdminDashboardPage() {
   
   const typedProfile = profile as Profile | null
 
-  const isAdmin = typedProfile?.role === 'admin'
-  
-  // Temporary hardcoded admin for debugging
+  // Temporary hardcoded admin for debugging - bypass role check completely for this user
   if (user.id === '6b64f2f9-7215-4d23-81d1-e2a8f22936d0') {
-    console.log('HARDCODED ADMIN in admin/page:', user.id)
-    // Skip redirect for this user
-  } else if (!isAdmin) {
-    redirect('/employee')
+    console.log('HARDCODED ADMIN:', user.id)
+    // Force admin access - skip all redirects
+  } else {
+    const isAdmin = typedProfile?.role === 'admin'
+    if (!isAdmin) {
+      redirect('/employee')
+    }
   }
 
   const orgId = typedProfile?.org_id ?? ''

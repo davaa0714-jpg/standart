@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { EmployeeSidebar } from './EmployeeSidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -42,19 +42,28 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   return (
     <ToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
-        <Sidebar
-          orgName={profile?.org_id ? undefined : 'Газрын Харилцааны Алба'}
+        <EmployeeSidebar
+          orgName={profile?.org_id ? 'Газрын Харилцааны Алба' : undefined}
           overdueCount={overdueCount ?? 0}
-          unreadCount={unreadCount ?? 0}
-          navItems={employeeNav}
-          bottomItems={employeeBottom}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header
             profile={profile}
             unreadCount={unreadCount ?? 0}
           />
-          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn">
+          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn relative">
+            {/* Debug Info */}
+            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-xs font-mono">
+              <div className="flex items-center gap-2 text-green-400 font-bold mb-1">
+                <span>🔧 DEBUG:</span>
+                <span>Employee Layout</span>
+              </div>
+              <div className="text-tx2 space-y-0.5">
+                <div>User ID: {user.id}</div>
+                <div>Role: {profile?.role || 'N/A'}</div>
+                <div>Layout: EmployeeLayout</div>
+              </div>
+            </div>
             {children}
           </main>
         </div>

@@ -17,7 +17,7 @@ export default async function RootPage() {
   let role = profile?.role
   if (user.id === '6b64f2f9-7215-4d23-81d1-e2a8f22936d0') {
     role = 'admin'
-    console.log('HARDCODED ADMIN:', user.id)
+    console.log('HARDCODED ADMIN in root:', user.id)
   }
   if (role === 'admin') redirect('/admin')
   else if (role === 'manager') redirect('/manager')

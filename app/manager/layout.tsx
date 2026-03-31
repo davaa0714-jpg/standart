@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { ManagerSidebar } from './ManagerSidebar'
+import { EmployeeSidebar } from './EmployeeSidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -42,19 +43,28 @@ export default async function ManagerLayout({ children }: { children: React.Reac
   return (
     <ToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
-        <Sidebar
-          orgName={profile?.org_id ? undefined : 'Газрын Харилцааны Алба'}
+        <ManagerSidebar
+          orgName={profile?.org_id ? 'Газрын Харилцааны Алба' : undefined}
           overdueCount={overdueCount ?? 0}
-          unreadCount={unreadCount ?? 0}
-          navItems={managerNav}
-          bottomItems={managerBottom}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header
             profile={profile}
             unreadCount={unreadCount ?? 0}
           />
-          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn">
+          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn relative">
+            {/* Debug Info */}
+            <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs font-mono">
+              <div className="flex items-center gap-2 text-purple-400 font-bold mb-1">
+                <span>🔧 DEBUG:</span>
+                <span>Manager Layout</span>
+              </div>
+              <div className="text-tx2 space-y-0.5">
+                <div>User ID: {user.id}</div>
+                <div>Role: {profile?.role || 'N/A'}</div>
+                <div>Layout: ManagerLayout</div>
+              </div>
+            </div>
             {children}
           </main>
         </div>
