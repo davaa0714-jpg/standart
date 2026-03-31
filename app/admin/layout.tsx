@@ -5,6 +5,18 @@ import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 import type { Profile } from '@/types/database'
 
+const adminNav = [
+  { label: 'Удирдлагын самбар', href: '/admin', icon: '📊' },
+  { label: 'Хурлын жагсаалт', href: '/meetings', icon: '📋' },
+  { label: 'Үүрэг даалгавар', href: '/tasks', icon: '✅' },
+  { label: 'Багийн гүйцэтгэл', href: '/biyelelt', icon: '📈' },
+  { label: 'Тайлан экспорт', href: '/export', icon: '📤' },
+]
+
+const adminBottom = [
+  { label: 'Тохиргоо', href: '/settings', icon: '⚙️' },
+]
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -35,6 +47,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           overdueCount={overdueCount ?? 0}
           unreadCount={unreadCount ?? 0}
           role={profile?.role}
+          navItems={adminNav}
+          bottomItems={adminBottom}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header

@@ -7,7 +7,7 @@ import type { TaskFull, MeetingStats, Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ManagerPage() {
+export default async function ManagerDashboardPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -50,34 +50,67 @@ export default async function ManagerPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
-      <div className="mb-6">
-        <div className="text-xs text-tx3 mb-1">Админ / Менежерийн самбар</div>
-        <h1 className="text-xl font-bold">Сайн байна уу, {profile?.full_name ?? 'хүндэт'}?</h1>
-        <p className="text-sm text-tx2 mt-0.5">Товчлон менежерийн хянах самбар</p>
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <div className="text-xs text-tx3">Менежер / Хяналтын самбар</div>
+        <h1 className="text-2xl font-bold">Сайн байна уу, {profile?.full_name ?? 'Менежер'}?</h1>
+        <p className="text-sm text-tx2">Багийн үйл ажиллагааг хянах самбар</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        <Link 
+          href="/meetings/new" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-light transition-colors"
+        >
+          <span>📅</span> Шинэ хурал
+        </Link>
+        <Link 
+          href="/tasks" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium hover:border-accent hover:text-accent-light transition-colors"
+        >
+          <span>➕</span> Үүрэг нэмэх
+        </Link>
+        <Link 
+          href="/biyelelt" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium hover:border-accent hover:text-accent-light transition-colors"
+        >
+          <span>📤</span> Биелэлт хянах
+        </Link>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Нийт үүрэг" value={stats.total} sub="Бүгдийг харах" color="blue" icon="📊" />
         <StatCard label="Дууссан" value={stats.done} sub={`${stats.pct}% бүрэн`} color="green" icon="✅" />
         <StatCard label="Хариуцлага хүлээсэн" value={stats.reviewing} sub="Хянаж буй" color="purple" icon="🧾" />
         <StatCard label="Хугацаа хэтэрсэн" value={stats.overdue} sub="Яаралтай" color="red" icon="⚠️" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold">Яаралтай үүрэг</h2>
-            <Link href="/tasks" className="text-xs text-primary-light hover:underline">Бүгдийг харах</Link>
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-[1fr_400px] gap-5">
+        {/* Left Column - Tasks */}
+        <div className="bg-surface border border-border rounded-lg p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold">Яаралтай үүрэг</h2>
+              <p className="text-xs text-tx3 mt-0.5">Хугацаа хэтэрсэн болон хянах шаардлагатай</p>
+            </div>
+            <Link href="/tasks" className="text-xs text-primary-light hover:underline">
+              Бүгдийг харах →
+            </Link>
           </div>
-          <div className="bg-surface border border-border rounded-lg overflow-hidden">
+          <div className="space-y-2">
             {!recentTasks?.length ? (
-              <div className="text-center py-10 text-tx3 text-sm">Үүрэг олдсонгүй</div>
+              <div className="text-sm text-tx3 text-center py-8 bg-surface2/50 rounded-lg">
+                Үүрэг олдсонгүй
+              </div>
             ) : (
               recentTasks.map((task: TaskFull) => (
                 <Link
                   key={task.id}
                   href={`/tasks/${task.id}`}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-surface2 transition-colors group"
+                  className="flex items-center gap-3 p-3 bg-surface2 rounded-lg border border-border hover:border-accent transition-colors group"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -92,11 +125,11 @@ export default async function ManagerPage() {
                       <span className="font-mono">{task.deadline}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <StatusPill status={task.status} />
-                    <div className="w-24">
+                    <div className="w-20">
                       <ProgressBar value={task.progress} />
-                      <div className="text-[10px] text-tx3 font-mono text-right mt-0.5">{task.progress}%</div>
+                      <div className="text-[10px] text-tx3 font-mono text-right">{task.progress}%</div>
                     </div>
                   </div>
                 </Link>
@@ -105,51 +138,61 @@ export default async function ManagerPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Right Column - Meetings */}
+        <div className="space-y-5">
           <div className="bg-surface border border-border rounded-lg p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold">Сүүлийн хурлууд</h2>
-              <Link href="/meetings" className="text-xs text-primary-light hover:underline">Дэлгэрэнгүй</Link>
+              <div>
+                <h2 className="text-sm font-bold">Сүүлийн хурлууд</h2>
+                <p className="text-xs text-tx3 mt-0.5">Хурлын биелэлтийн явц</p>
+              </div>
+              <Link href="/meetings" className="text-xs text-primary-light hover:underline">
+                Дэлгэрэнгүй →
+              </Link>
             </div>
-            {meetings?.length ? (
-              meetings.map((m: MeetingStats) => {
-                const pct = m.total_tasks ? Math.round(m.done_tasks / m.total_tasks * 100) : 0
-                return (
-                  <Link
-                    key={m.id}
-                    href={`/meetings/${m.id}`}
-                    className="block border border-border rounded-lg p-4 hover:border-accent hover:text-accent-light transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="text-sm font-semibold leading-tight">{m.title}</div>
-                        <div className="text-[11px] text-tx3 font-mono mt-0.5">{m.held_at}</div>
+            <div className="space-y-3">
+              {meetings?.length ? (
+                meetings.map((m: MeetingStats) => {
+                  const pct = m.total_tasks ? Math.round(m.done_tasks / m.total_tasks * 100) : 0
+                  return (
+                    <Link
+                      key={m.id}
+                      href={`/meetings/${m.id}`}
+                      className="block p-4 bg-surface2 rounded-lg border border-border hover:border-accent transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium truncate">{m.title}</h3>
+                          <p className="text-[11px] text-tx3 mt-0.5">{m.held_at}</p>
+                        </div>
+                        <span className={`text-sm font-bold font-mono ${pct >= 80 ? 'text-accent-light' : pct >= 50 ? 'text-warn-light' : 'text-danger-light'}`}>
+                          {pct}%
+                        </span>
                       </div>
-                      <span className={`text-sm font-bold font-mono ${pct >= 80 ? 'text-accent-light' : pct >= 50 ? 'text-warn-light' : 'text-danger-light'}`}>
-                        {pct}%
-                      </span>
-                    </div>
-                    <ProgressBar value={pct} />
-                    <div className="flex justify-between mt-2 text-[11px] text-tx3">
-                      <span>Үүрэг: <strong className="text-tx">{m.total_tasks}</strong></span>
-                      <span>Дууссан: <strong className="text-accent-light">{m.done_tasks}</strong></span>
-                      {m.overdue_tasks > 0 && <span className="text-danger-light">Хэтэрсэн: {m.overdue_tasks}</span>}
-                    </div>
-                  </Link>
-                )
-              })
-            ) : (
-              <div className="text-center text-sm text-tx3 py-6">Хурлын мэдээлэл байхгүй</div>
+                      <ProgressBar value={pct} />
+                      <div className="flex justify-between mt-2 text-[11px] text-tx3">
+                        <span>Үүрэг: <strong className="text-tx">{m.total_tasks}</strong></span>
+                        <span>Дууссан: <strong className="text-accent-light">{m.done_tasks}</strong></span>
+                        {m.overdue_tasks > 0 && <span className="text-danger-light">Хэтэрсэн: {m.overdue_tasks}</span>}
+                      </div>
+                    </Link>
+                  )
+                })
+              ) : (
+                <div className="text-sm text-tx3 text-center py-8 bg-surface2/50 rounded-lg">
+                  Хурлын мэдээлэл байхгүй
+                </div>
+              )}
+            </div>
+            {manageMeetings && (
+              <Link
+                href="/meetings/new"
+                className="flex items-center justify-center gap-2 w-full py-3 border border-dashed border-border rounded-lg text-sm text-tx3 hover:border-accent hover:text-accent-light transition-colors"
+              >
+                <span>+</span> Хурал төлөвлөх
+              </Link>
             )}
           </div>
-          {manageMeetings && (
-            <Link
-              href="/meetings/new"
-              className="flex items-center justify-center border border-dashed border-border rounded-lg p-3 text-sm text-tx3 hover:border-accent hover:text-accent-light transition-colors"
-            >
-              + Хурал төлөвлөх
-            </Link>
-          )}
         </div>
       </div>
     </div>
