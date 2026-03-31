@@ -1,0 +1,41 @@
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
+  const { data, error } = await supabase
+    .from('meeting_stats').select('*').eq('org_id', profile?.org_id ?? '')
+    .order('held_at', { ascending: false })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
+export async function POST(request: Request) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase.from('profiles').select('role,org_id').eq('id', user.id).single()
+  if (profile?.role === 'staff') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const body = await request.json()
+  const { count } = await supabase.from('meetings')
+    .select('*', { count: 'exact', head: true }).eq('org_id', profile?.org_id ?? '')
+
+  const { data, error } = await supabase.from('meetings').insert({
+    ...body,
+    org_id:     profile?.org_id,
+    meeting_no: (count ?? 0) + 1,
+    chair_id:   user.id,
+    created_by: user.id,
+    status:     'open',
+  }).select().single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data, { status: 201 })
+}
