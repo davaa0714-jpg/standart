@@ -42,7 +42,7 @@ export default async function BiyeleltPage() {
           <p className="text-sm text-tx2 mt-0.5">{canManage ? 'Бүх ажилтны биелэлтийг харах' : 'Танд хариуцсан үүрэг биелэлт'}</p>
         </div>
         {canManage ? (
-          <ExportButton tasks={tasks} title="Биелэлтийн тайлан" />
+          <ExportButton tasks={tasks ?? []} title="Биелэлтийн тайлан" />
         ) : (
           <CompletionSubmitModal tasks={typedTasks} />
         )}

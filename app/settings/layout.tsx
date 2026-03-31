@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { AdminSidebar } from '@/components/layout/AdminSidebar'
-import { ManagerSidebar } from '@/components/layout/ManagerSidebar'
-import { EmployeeSidebar } from '@/components/layout/EmployeeSidebar'
+import { AdminSidebar } from '@/app/admin/AdminSidebar'
+import { ManagerSidebar } from '@/app/manager/ManagerSidebar'
+import { EmployeeSidebar } from '@/app/employee/EmployeeSidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -30,6 +30,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('profile_id', user.id)
     .eq('is_read', false)
 
+  // Determine which sidebar to show based on role
+  const userRole = profile?.role || 'admin'
+  const SidebarComponent = userRole === 'admin' 
+    ? AdminSidebar 
+    : userRole === 'manager' 
+      ? ManagerSidebar 
+      : EmployeeSidebar
+
   return (
     <ToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
@@ -37,7 +45,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           orgName={profile?.org_id ? undefined : 'Газрын Харилцааны Алба'}
           overdueCount={overdueCount ?? 0}
           unreadCount={unreadCount ?? 0}
-          role={profile?.role}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header
