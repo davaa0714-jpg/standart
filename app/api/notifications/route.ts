@@ -23,10 +23,11 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id, all } = await request.json()
+  const db = supabase as any
   if (all) {
-    await supabase.from('notifications').update({ is_read: true }).eq('profile_id', user.id)
+    await db.from('notifications').update({ is_read: true }).eq('profile_id', user.id)
   } else if (id) {
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+    await db.from('notifications').update({ is_read: true }).eq('id', id)
   }
   return NextResponse.json({ ok: true })
 }

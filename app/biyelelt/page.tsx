@@ -6,7 +6,7 @@ import { StatusPill, TypeTag, ProgressBar } from '@/components/ui/Badges'
 import { ExportButton } from '@/components/export/ExportButton'
 import { StaffStatTable } from '@/components/tasks/StaffStatTable'
 import { TaskMiniList } from '@/components/tasks/TaskMiniList'
-import type { TaskFull, MeetingStats } from '@/types/database'
+import type { TaskFull, Profile, TaskStatus } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +15,7 @@ export default async function BiyeleltPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single() as { data: Profile | null }
   const canManage = profile?.role === 'admin' || profile?.role === 'manager'
   const orgId = profile?.org_id ?? ''
 
@@ -27,9 +27,10 @@ export default async function BiyeleltPage() {
     ? await supabase.from('staff_stats').select('*').order('completion_pct', { ascending: false })
     : { data: null }
 
-  const myPending = (tasks ?? []).filter(t => ['new','in_progress','overdue'].includes(t.status))
-  const myReview = (tasks ?? []).filter(t => ['submitted','reviewing'].includes(t.status))
-  const myDone = (tasks ?? []).filter(t => t.status === 'done')
+  const typedTasks = (tasks ?? []) as (TaskFull & { status: TaskStatus })[]
+  const myPending = typedTasks.filter(t => ['new','in_progress','overdue'].includes(t.status))
+  const myReview = typedTasks.filter(t => ['submitted','reviewing'].includes(t.status))
+  const myDone = typedTasks.filter(t => t.status === 'done')
 
   return (
     <div className="max-w-[1000px] mx-auto space-y-6">

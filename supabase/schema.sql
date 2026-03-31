@@ -30,8 +30,8 @@ create table profiles (
   position      text,                          -- Албан тушаал
   department    text,                          -- Хэлтэс
   phone         text,
-  role          text not null default 'staff'  -- 'admin' | 'inspector' | 'staff'
-                check (role in ('admin','inspector','staff')),
+  role          text not null default 'staff'  -- 'admin' | 'manager' | 'staff'
+                check (role in ('admin','manager','staff')),
   is_active     boolean default true,
   avatar_url    text,
   created_at    timestamptz default now(),

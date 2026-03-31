@@ -5,7 +5,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { StaffStatTable } from '@/components/tasks/StaffStatTable'
 import { TaskMiniList } from '@/components/tasks/TaskMiniList'
 import { ProgressBar } from '@/components/ui/Badges'
-import type { TaskFull, MeetingStats } from '@/types/database'
+import type { TaskFull, MeetingStats, Profile, TaskStatus } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +18,7 @@ export default async function AdminDashboardPage() {
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .single() as { data: Profile | null }
 
   const isAdmin = profile?.role === 'admin'
   if (!isAdmin) redirect('/dashboard')
@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
       .limit(4),
   ])
 
-  const statuses = taskStatuses ?? []
+  const statuses = (taskStatuses ?? []) as { status: TaskStatus }[]
   const total = statuses.length
   const done = statuses.filter(t => t.status === 'done').length
   const inProgress = statuses.filter(t => t.status === 'in_progress').length

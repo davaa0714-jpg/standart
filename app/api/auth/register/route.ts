@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import type { Database } from '@/types/database'
 
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
-const VALID_ROLES = new Set<Database['public']['Tables']['profiles']['Row']['role']>([
-  'admin',
-  'manager',
-  'employee',
-])
+const VALID_ROLES = new Set(['admin', 'manager', 'staff'])
 
 type RegisterBody = {
   full_name?: unknown
@@ -42,7 +37,7 @@ export async function POST(req: NextRequest) {
     const fullName = normalizeRequiredText(body.full_name)
     const email = normalizeRequiredText(body.email).toLowerCase()
     const password = normalizeRequiredText(body.password)
-    const role = normalizeRequiredText(body.role) as Database['public']['Tables']['profiles']['Row']['role']
+    const role = normalizeRequiredText(body.role)
 
     if (!fullName || !email || !password) {
       return NextResponse.json({ error: 'Full name, email, and password are required.' }, { status: 400 })
@@ -69,6 +64,7 @@ export async function POST(req: NextRequest) {
 
     if (createUserError || !createdUser.user) {
       const message = createUserError?.message ?? 'Unable to create auth user.'
+      console.error('Auth user creation error:', createUserError)
       const status = isDuplicateEmailError(message) ? 400 : 500
       const error =
         status === 400
@@ -81,7 +77,7 @@ export async function POST(req: NextRequest) {
     const userId = createdUser.user.id
     createdUserId = userId
 
-    const profile: Database['public']['Tables']['profiles']['Insert'] = {
+    const profile = {
       id: userId,
       org_id: ORG_ID,
       full_name: fullName,
@@ -96,6 +92,7 @@ export async function POST(req: NextRequest) {
     const { error: profileError } = await supabase.from('profiles').insert([profile])
 
     if (profileError) {
+      console.error('Profile insert error details:', profileError)
       await supabase.auth.admin.deleteUser(userId)
       return NextResponse.json({ error: profileError.message }, { status: 400 })
     }

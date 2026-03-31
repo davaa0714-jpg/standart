@@ -27,7 +27,7 @@ export async function getTaskById(id: string) {
 
 export async function createTask(data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) {
   const db = createClient()
-  const { data: task, error } = await db.from('tasks').insert(data).select().single()
+  const { data: task, error } = await (db.from('tasks').insert(data as any).select().single() as any)
   if (error) throw error
 
   // Хариуцагчид мэдэгдэл илгээх
@@ -143,7 +143,7 @@ export async function getMeetingById(id: string) {
 
 export async function createMeeting(data: Omit<Meeting, 'id' | 'created_at' | 'updated_at'>) {
   const db = createClient()
-  return db.from('meetings').insert(data).select().single()
+  return (db.from('meetings').insert(data as any).select().single() as any)
 }
 
 // ── PROFILES ──────────────────────────────────────────────────────

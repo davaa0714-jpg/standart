@@ -24,6 +24,7 @@ interface SidebarProps {
   orgName?: string
   unreadCount?: number
   overdueCount?: number
+  role?: string
   navItems?: SidebarItem[]
   bottomItems?: SidebarItem[]
 }

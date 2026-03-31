@@ -10,19 +10,19 @@ import { cn } from '@/lib/utils'
 
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
-type Role = 'admin' | 'manager' | 'employee'
+type Role = 'admin' | 'manager' | 'staff'
 
 const roleOptions: { value: Role; title: string; description: string }[] = [
   { value: 'admin', title: 'Админ', description: 'Бүх байгууллагын удирдлага' },
   { value: 'manager', title: 'Менежер', description: 'Багийн ажлыг хариуцагч' },
-  { value: 'employee', title: 'Ажилтан', description: 'Өдөр тутмын үүргээ биелүүлэгч' },
+  { value: 'staff', title: 'Ажилтан', description: 'Өдөр тутмын үүргээ биелүүлэгч' },
 ]
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ full_name: '', email: '', password: '', position: '', department: '', phone: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [role, setRole] = useState<Role>('employee')
+  const [role, setRole] = useState<Role>('staff')
   const router = useRouter()
 
   const updateField = (key: string) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -46,13 +46,13 @@ export default function RegisterPage() {
       return
     }
 
-    const profileValues: Database['public']['Tables']['profiles']['Insert'] = {
+    const profileValues = {
       id: userId,
       org_id: ORG_ID,
       full_name: form.full_name,
-      position: form.position,
-      department: form.department,
-      phone: form.phone,
+      position: form.position || null,
+      department: form.department || null,
+      phone: form.phone || null,
       role,
       is_active: true,
       avatar_url: null,

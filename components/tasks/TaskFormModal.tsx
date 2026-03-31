@@ -18,8 +18,8 @@ interface TaskFormProps {
 export function TaskFormModal({ open, onClose, onSaved, orgId, currentUserId }: TaskFormProps) {
   const { success, error: toastErr } = useToast()
   const [loading, setLoading] = useState(false)
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [meetings, setMeetings]  = useState<Meeting[]>([])
+  const [profiles, setProfiles] = useState<Array<Pick<Profile, 'id' | 'full_name' | 'position'>>>([])
+  const [meetings, setMeetings]  = useState<Array<Pick<Meeting, 'id' | 'title' | 'meeting_no'>>>([])
 
   const [form, setForm] = useState({
     title: '', description: '', task_type: 'uureg' as TaskType,

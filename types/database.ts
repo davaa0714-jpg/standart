@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'manager' | 'employee'
+export type Role = 'admin' | 'manager' | 'staff'
 export type TaskType = 'uureg' | 'daalgavar' | 'medeelel'
 export type Priority = 'high' | 'mid' | 'low'
 export type TaskStatus = 'new' | 'in_progress' | 'submitted' | 'reviewing' | 'done' | 'overdue'
@@ -252,5 +252,5 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 export const ROLE_LABELS: Record<Role, string> = {
   admin: 'Дээд удирдлага',
   manager: 'Менежер',
-  employee: 'Ажилтан',
+  staff: 'Ажилтан',
 }

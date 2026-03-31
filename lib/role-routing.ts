@@ -1,6 +1,6 @@
 import type { Role } from '@/types/database'
 
-const KNOWN_ROLES: Role[] = ['admin', 'manager', 'employee']
+const KNOWN_ROLES: Role[] = ['admin', 'manager', 'staff']
 
 export function normalizeRole(role: unknown): Role | undefined {
   if (typeof role !== 'string') return undefined
@@ -14,6 +14,6 @@ export function resolveRole(profileRole?: Role | null, metadataRole?: unknown): 
 export function getRoleHomePath(role?: Role | null) {
   if (role === 'admin') return '/admin'
   if (role === 'manager') return '/manager'
-  if (role === 'employee') return '/employee'
+  if (role === 'staff') return '/employee'
   return '/employee'
 }
