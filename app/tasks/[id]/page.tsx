@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { StatusPill, TypeTag, PriorityDot, ProgressBar, Badge } from '@/components/ui/Badges'
 import { PRIORITY_LABELS } from '@/types/database'
 import { TaskActions } from '@/components/tasks/TaskActions'
+import type { TaskFull, Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   const { data: task } = await supabase.from('tasks_full').select('*').eq('id', params.id).single()
   if (!task) notFound()
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single() as { data: Profile | null }
   const { data: history } = await supabase
     .from('task_history').select('*, profiles(full_name)').eq('task_id', params.id).order('created_at')
   const { data: comments } = await supabase
@@ -119,7 +120,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
                 ['Өгсөн', task.assigned_by_name ?? '—'],
                 ['Хурал', task.meeting_title ?? '—'],
                 ['Биелэх хугацаа', task.deadline],
-                ['Эрэмбэ', PRIORITY_LABELS[task.priority]],
+                ['Эрэмбэ', PRIORITY_LABELS[task.priority as keyof typeof PRIORITY_LABELS]],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-2">
                   <span className="text-tx3 text-xs">{k}</span>

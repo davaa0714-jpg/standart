@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { StatusPill, TypeTag, ProgressBar, Badge } from '@/components/ui/Badges'
 import { ExportButton } from '@/components/export/ExportButton'
-import type { TaskFull } from '@/types/database'
+import type { TaskFull, Profile, MeetingStats } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,13 +12,13 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: meeting } = await supabase.from('meeting_stats').select('*').eq('id', params.id).single()
+  const { data: meeting } = await supabase.from('meeting_stats').select('*').eq('id', params.id).single() as { data: MeetingStats | null }
   if (!meeting) notFound()
 
   const { data: tasks } = await supabase
-    .from('tasks_full').select('*').eq('meeting_id', params.id).order('deadline')
+    .from('tasks_full').select('*').eq('meeting_id', params.id).order('deadline') as { data: TaskFull[] | null }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single() as { data: Profile | null }
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
   const pct = meeting.total_tasks ? Math.round(meeting.done_tasks / meeting.total_tasks * 100) : 0

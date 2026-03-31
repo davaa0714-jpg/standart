@@ -291,7 +291,7 @@ export async function exportToPDF(tasks: TaskFull[], title: string) {
 
 // ── HELPER ────────────────────────────────────────────────────────
 function downloadBuffer(buffer: ArrayBuffer | Buffer, filename: string, mimeType: string) {
-  const blob = new Blob([buffer], { type: mimeType })
+  const blob = new Blob([buffer as BlobPart], { type: mimeType })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

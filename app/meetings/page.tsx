@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ProgressBar, Badge } from '@/components/ui/Badges'
 import { MeetingFormButton } from '@/components/meetings/MeetingFormButton'
-import type { MeetingStats } from '@/types/database'
+import type { MeetingStats, Profile, TaskFull } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,10 +12,10 @@ export default async function MeetingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single() as { data: Profile | null }
   const { data: meetings }  = await supabase
     .from('meeting_stats').select('*').eq('org_id', profile?.org_id ?? '')
-    .order('held_at', { ascending: false })
+    .order('held_at', { ascending: false }) as { data: MeetingStats[] | null }
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
@@ -36,7 +36,7 @@ export default async function MeetingsPage() {
             <div className="text-4xl mb-3">📋</div>
             <div className="text-sm">Хурал бүртгэгдээгүй байна</div>
           </div>
-        ) : meetings.map((m: MeetingStats) => {
+        ) : meetings.map((m) => {
           const pct = m.total_tasks ? Math.round(m.done_tasks / m.total_tasks * 100) : 0
           return (
             <Link key={m.id} href={`/meetings/${m.id}`}

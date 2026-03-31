@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+import type { Profile } from '@/types/database'
+
 export async function GET(request: Request) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -11,7 +13,7 @@ export async function GET(request: Request) {
   const meeting_id = searchParams.get('meeting_id')
   const assignee   = searchParams.get('assignee')
 
-  const { data: profile } = await supabase.from('profiles').select('role,org_id').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role,org_id').eq('id', user.id).single() as { data: Profile | null }
 
   let q = supabase.from('tasks_full').select('*')
   if (profile?.role === 'staff') q = q.eq('assignee_id', user.id)
@@ -31,24 +33,25 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabase.from('profiles').select('role,org_id').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role,org_id').eq('id', user.id).single() as { data: Profile | null }
   if (profile?.role === 'staff') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
-  const { data, error } = await supabase.from('tasks').insert({
+  const { data, error } = await (supabase.from('tasks').insert({
     ...body,
     org_id:     profile?.org_id,
     created_by: user.id,
     assigned_by: user.id,
     status:     'new',
     progress:   0,
-  }).select().single()
+  }).select().single() as any)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Мэдэгдэл
   if (data.assignee_id) {
-    await supabase.from('notifications').insert({
+    const db = supabase as any
+    await db.from('notifications').insert({
       profile_id: data.assignee_id,
       task_id:    data.id,
       type:       'assigned',
@@ -57,7 +60,8 @@ export async function POST(request: Request) {
     })
   }
   // Түүх
-  await supabase.from('task_history').insert({
+  const db = supabase as any
+  await db.from('task_history').insert({
     task_id:    data.id,
     profile_id: user.id,
     action:     'created',

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { StatCard } from '@/components/ui/StatCard'
 import { StatusPill, TypeTag, ProgressBar } from '@/components/ui/Badges'
-import type { TaskFull, MeetingStats } from '@/types/database'
+import type { TaskFull, MeetingStats, Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,21 +12,22 @@ export default async function ManagerPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single() as { data: Profile | null }
   const orgId = profile?.org_id
 
   const { data: allTasks } = await supabase
     .from('tasks')
     .select('status')
-    .eq('org_id', orgId ?? '')
+    .eq('org_id', orgId ?? '') as { data: { status: string }[] | null }
 
+  const typedAllTasks = allTasks ?? []
   const stats = {
-    total: allTasks?.length ?? 0,
-    done: allTasks?.filter(t => t.status === 'done').length ?? 0,
-    overdue: allTasks?.filter(t => t.status === 'overdue').length ?? 0,
-    reviewing: allTasks?.filter(t => t.status === 'reviewing' || t.status === 'submitted').length ?? 0,
-    pct: allTasks?.length
-      ? Math.round((allTasks.filter(t => t.status === 'done').length / allTasks.length) * 100)
+    total: typedAllTasks.length,
+    done: typedAllTasks.filter(t => t.status === 'done').length,
+    overdue: typedAllTasks.filter(t => t.status === 'overdue').length,
+    reviewing: typedAllTasks.filter(t => t.status === 'reviewing' || t.status === 'submitted').length,
+    pct: typedAllTasks.length
+      ? Math.round((typedAllTasks.filter(t => t.status === 'done').length / typedAllTasks.length) * 100)
       : 0,
   }
 

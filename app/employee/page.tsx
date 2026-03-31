@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { StatCard } from '@/components/ui/StatCard'
 import { TaskMiniList } from '@/components/tasks/TaskMiniList'
 import Link from 'next/link'
-import type { TaskFull } from '@/types/database'
+import type { TaskFull, Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export default async function EmployeePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single() as { data: Profile | null }
   const { data: tasks } = await supabase
     .from('tasks_full')
     .select('*')

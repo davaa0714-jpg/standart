@@ -32,7 +32,8 @@ export async function createTask(data: Omit<Task, 'id' | 'created_at' | 'updated
 
   // Хариуцагчид мэдэгдэл илгээх
   if (task.assignee_id) {
-    await db.from('notifications').insert({
+    const dbNotif = createClient() as any
+    await dbNotif.from('notifications').insert({
       profile_id: task.assignee_id,
       task_id: task.id,
       type: 'assigned',
@@ -42,7 +43,8 @@ export async function createTask(data: Omit<Task, 'id' | 'created_at' | 'updated
   }
 
   // Түүх бүртгэх
-  await db.from('task_history').insert({
+  const dbHistory = createClient() as any
+  await dbHistory.from('task_history').insert({
     task_id: task.id,
     profile_id: task.created_by,
     action: 'created',
@@ -64,7 +66,8 @@ export async function updateTask(id: string, data: Partial<Task>, updatedBy?: st
 
   // Статус өөрчлөгдсөн бол түүхэнд бүртгэх
   if (old && data.status && old.status !== data.status) {
-    await db.from('task_history').insert({
+    const dbHistory = createClient() as any
+    await dbHistory.from('task_history').insert({
       task_id: id,
       profile_id: updatedBy ?? null,
       action: 'updated',
@@ -89,7 +92,8 @@ export async function submitTask(id: string, note: string, submittedBy: string) 
 
   // Удирдлагад мэдэгдэл
   if (task?.assigned_by) {
-    await db.from('notifications').insert({
+    const dbNotif = createClient() as any
+    await dbNotif.from('notifications').insert({
       profile_id: task.assigned_by,
       task_id: id,
       type: 'submitted',
@@ -117,7 +121,8 @@ export async function reviewTask(
 
   // Ажилтанд мэдэгдэл
   if (task?.assignee_id) {
-    await db.from('notifications').insert({
+    const dbNotif = createClient() as any
+    await dbNotif.from('notifications').insert({
       profile_id: task.assignee_id,
       task_id: id,
       type: approved ? 'approved' : 'rejected',
@@ -187,7 +192,10 @@ export async function markAllNotifsRead(profile_id: string) {
 export async function getStaffStats(org_id?: string) {
   const db = createClient()
   let q = db.from('staff_stats').select('*').order('completion_pct', { ascending: false })
-  if (org_id) q = q.eq('org_id' as any, org_id)
+  if (org_id) {
+    const dbAny = db as any
+    q = dbAny.from('staff_stats').select('*').eq('org_id', org_id).order('completion_pct', { ascending: false })
+  }
   return q
 }
 

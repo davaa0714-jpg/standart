@@ -4,6 +4,8 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 
+import type { Profile } from '@/types/database'
+
 const managerNav = [
   { label: 'Хяналтын самбар', href: '/manager', icon: '📊' },
   { label: 'Хурлын жагсаалт', href: '/meetings', icon: '📋' },
@@ -24,7 +26,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .single() as { data: Profile | null }
 
   const { count: overdueCount } = await supabase
     .from('tasks')

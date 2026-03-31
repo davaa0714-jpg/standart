@@ -4,6 +4,8 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 
+import type { Profile } from '@/types/database'
+
 const employeeNav = [
   { label: 'Үүрэг даалгавар', href: '/tasks', icon: '✅' },
   { label: 'Хурлыг харах', href: '/meetings', icon: '📋' },
@@ -23,7 +25,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .single() as { data: Profile | null }
 
   const { count: overdueCount } = await supabase
     .from('tasks')

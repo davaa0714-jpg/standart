@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import type { Profile } from '@/types/database'
 
 export default async function RootPage() {
   const supabase = createClient()
@@ -9,7 +10,7 @@ export default async function RootPage() {
     return
   }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single() as { data: Profile | null }
   const role = profile?.role
   if (role === 'admin') redirect('/admin')
   else if (role === 'manager') redirect('/manager')
