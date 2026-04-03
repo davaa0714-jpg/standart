@@ -177,6 +177,21 @@ create table export_logs (
 );
 
 -- ============================================================
+-- 11. АУДИО ФАЙЛ (Audio Files)
+-- ============================================================
+create table audio_files (
+  id          uuid primary key default uuid_generate_v4(),
+  org_id      uuid references organizations(id),
+  uploaded_by uuid references profiles(id),
+  name        text not null,
+  file_path   text not null,               -- Supabase Storage path
+  file_type   text,                        -- 'webm'|'mp3'|'wav'|'ogg'
+  file_size   bigint,
+  duration    int,                         -- Seconds
+  created_at  timestamptz default now()
+);
+
+-- ============================================================
 -- INDEXES — Гүйцэтгэл сайжруулах
 -- ============================================================
 create index idx_tasks_assignee   on tasks(assignee_id);
@@ -187,6 +202,8 @@ create index idx_tasks_org        on tasks(org_id);
 create index idx_notifications_profile on notifications(profile_id, is_read);
 create index idx_history_task     on task_history(task_id);
 create index idx_comments_task    on task_comments(task_id);
+create index idx_audio_files_org  on audio_files(org_id);
+create index idx_audio_files_user on audio_files(uploaded_by);
 
 -- ============================================================
 -- UPDATED_AT АВТОМАТ ШИНЭЧЛЭЛТ
@@ -302,6 +319,7 @@ alter table task_history       enable row level security;
 alter table task_comments      enable row level security;
 alter table notifications      enable row level security;
 alter table export_logs        enable row level security;
+alter table audio_files        enable row level security;
 
 -- Profiles: өөрийн байгууллагынхыг харна
 create policy "profiles_org_view" on profiles
@@ -370,16 +388,26 @@ create policy "attachments_view" on task_attachments
     )
   );
 
--- History: task харах эрхтэй бол харна
-create policy "history_view" on task_history
+-- Audio files: өөрийн болон байгууллагынхаа файлуудыг харна
+-- View policy: org_id эсвэл uploaded_by-гээр хандана
+create policy "audio_files_org_view" on audio_files
   for select using (
-    exists (
-      select 1 from tasks t
-      where t.id = task_id
-        and (t.assignee_id = auth.uid()
-          or (select role from profiles where id = auth.uid()) in ('admin','inspector'))
-    )
+    org_id = (select org_id from profiles where id = auth.uid())
+    or uploaded_by = auth.uid()
   );
+
+-- Insert policy: бүтэн эрхтэй хэрэглэгчид бичих эрх
+-- (admin, manager, staff бүгд бичих боломжтой)
+create policy "audio_files_insert" on audio_files
+  for insert with check (uploaded_by = auth.uid());
+
+-- Update policy: зөвхөн өөрийн файлуудаа нэр өөрчлөх
+create policy "audio_files_update_own" on audio_files
+  for update using (uploaded_by = auth.uid());
+
+-- Delete policy: зөвхөн өөрийн файлуудаа устгах
+create policy "audio_files_delete_own" on audio_files
+  for delete using (uploaded_by = auth.uid());
 
 -- ============================================================
 -- STORAGE BUCKET (Supabase Storage)

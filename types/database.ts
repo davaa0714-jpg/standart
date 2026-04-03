@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'manager' | 'staff'
+export type Role = 'admin' | 'director' | 'manager' | 'staff'
 export type TaskType = 'uureg' | 'daalgavar' | 'medeelel'
 export type Priority = 'high' | 'mid' | 'low'
 export type TaskStatus = 'new' | 'in_progress' | 'submitted' | 'reviewing' | 'done' | 'overdue'
@@ -58,6 +58,11 @@ export interface Database {
         Row: ExportLog
         Insert: Omit<ExportLog, 'id' | 'created_at'>
         Update: never
+      }
+      audio_files: {
+        Row: AudioFile
+        Insert: Omit<AudioFile, 'id' | 'created_at'>
+        Update: Partial<Pick<AudioFile, 'name'>>
       }
     }
     Views: {
@@ -191,6 +196,18 @@ export interface ExportLog {
   created_at: string
 }
 
+export interface AudioFile {
+  id: string
+  org_id: string | null
+  uploaded_by: string | null
+  name: string
+  file_path: string
+  file_type: string | null
+  file_size: number | null
+  duration: number | null
+  created_at: string
+}
+
 // ── VIEW TYPES ────────────────────────────────────────────────────
 
 export interface TaskFull extends Task {
@@ -251,6 +268,7 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: 'Дээд удирдлага',
+  director: 'Захирал',
   manager: 'Менежер',
   staff: 'Ажилтан',
 }

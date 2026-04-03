@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { AudioFile as DatabaseAudioFile } from '@/types/database'
 
 // Types
 interface AudioFile {
@@ -12,6 +14,9 @@ interface AudioFile {
   size: number
   type: string
   createdAt: Date
+  isSaved?: boolean  // Whether saved to database
+  dbId?: string      // Database record ID if saved
+  file_path?: string // Storage path in Supabase
 }
 
 // Format seconds to MM:SS
@@ -42,6 +47,7 @@ export default function VoiceRecorderPage() {
   const [isSupported, setIsSupported] = useState(true)
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp3' | 'wav'>('webm')
   const [isConverting, setIsConverting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   
   // Multiple files state
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([])
@@ -105,17 +111,104 @@ export default function VoiceRecorderPage() {
     }
   }, [])
 
-  // Handle multiple file imports
-  const handleFileImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  // Load audio files from database on mount
+  useEffect(() => {
+    loadAudioFilesFromDB()
+  }, [])
+
+  // Load audio files from database
+  const loadAudioFilesFromDB = async () => {
+    try {
+      const response = await fetch('/api/audio-files')
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        // Convert database files to local format with signed URLs
+        const dbFiles: AudioFile[] = await Promise.all(
+          result.data.map(async (dbFile: DatabaseAudioFile) => {
+            // Get signed URL for playback
+            const supabase = createClient()
+            const { data: { publicUrl } } = supabase.storage
+              .from('audio-files')
+              .getPublicUrl(dbFile.file_path)
+            
+            return {
+              id: dbFile.id,
+              name: dbFile.name,
+              url: publicUrl,
+              blob: new Blob(), // Empty blob for DB files (loaded on demand)
+              duration: dbFile.duration || 0,
+              size: dbFile.file_size || 0,
+              type: dbFile.file_type || 'audio/webm',
+              createdAt: new Date(dbFile.created_at),
+              isSaved: true,
+              dbId: dbFile.id
+            }
+          })
+        )
+        
+        setAudioFiles(prev => {
+          // Merge: keep local files that aren't saved yet, add DB files
+          const localUnsaved = prev.filter(f => !f.isSaved)
+          return [...dbFiles, ...localUnsaved]
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load audio files from database:', err)
+    }
+  }
+
+  // Validate audio file is not corrupted
+  const validateAudioFile = async (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const audio = new Audio()
+      const url = URL.createObjectURL(file)
+      
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(url)
+        resolve(false) // File takes too long to load, likely corrupted
+      }, 5000) // 5 second timeout
+      
+      audio.onloadedmetadata = () => {
+        clearTimeout(timeout)
+        URL.revokeObjectURL(url)
+        resolve(true) // File loaded successfully
+      }
+      
+      audio.onerror = () => {
+        clearTimeout(timeout)
+        URL.revokeObjectURL(url)
+        resolve(false) // File is corrupted
+      }
+      
+      audio.src = url
+    })
+  }
+
+  // Upload file to database
+  const handleFileImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
     const newFiles: AudioFile[] = []
+    const validAudioTypes = ['audio/webm', 'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/mp4', 'audio/x-m4a', 'audio/flac', 'audio/aac']
     
-    Array.from(files).forEach(file => {
-      if (!file.type.startsWith('audio/')) {
-        setError(`"${file.name}" is not a valid audio file`)
-        return
+    for (const file of Array.from(files)) {
+      // Check if file is a valid audio type
+      const isValidAudio = validAudioTypes.some(type => file.type === type || file.type.startsWith(type))
+      
+      if (!isValidAudio) {
+        setError(`"${file.name}" is not a supported audio file. Supported formats: WebM, MP3, WAV, OGG, M4A, FLAC, AAC`)
+        continue
+      }
+
+      // Validate file is not corrupted (only for files larger than 1KB)
+      if (file.size > 1024) {
+        const isValidFile = await validateAudioFile(file)
+        if (!isValidFile) {
+          setError(`"${file.name}" appears to be corrupted or invalid`)
+          continue
+        }
       }
 
       const url = URL.createObjectURL(file)
@@ -130,7 +223,7 @@ export default function VoiceRecorderPage() {
         type: file.type,
         createdAt: new Date()
       })
-    })
+    }
 
     if (newFiles.length > 0) {
       setAudioFiles(prev => [...prev, ...newFiles])
@@ -138,8 +231,97 @@ export default function VoiceRecorderPage() {
     }
   }, [])
 
-  // Delete file
-  const deleteFile = useCallback((id: string) => {
+  // Save file to database
+  const saveFileToDatabase = async (file: AudioFile) => {
+    if (file.isSaved || file.blob.size === 0) return
+    
+    setIsUploading(true)
+    try {
+      // Create form data
+      const formData = new FormData()
+      
+      // Get file extension from original file type or default to webm
+      let fileExtension = 'webm'
+      if (file.type) {
+        const typeToExt: Record<string, string> = {
+          'audio/webm': 'webm',
+          'audio/mp3': 'mp3',
+          'audio/mpeg': 'mp3',
+          'audio/wav': 'wav',
+          'audio/ogg': 'ogg',
+          'audio/m4a': 'm4a',
+          'audio/mp4': 'm4a',
+          'audio/x-m4a': 'm4a',
+          'audio/flac': 'flac',
+          'audio/aac': 'aac'
+        }
+        fileExtension = typeToExt[file.type] || 'webm'
+      }
+      
+      formData.append('file', file.blob, `${file.name}.${fileExtension}`)
+      formData.append('name', file.name)
+      formData.append('duration', String(file.duration))
+      
+      const response = await fetch('/api/audio-files', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        // Update file with DB info
+        setAudioFiles(prev => prev.map(f => 
+          f.id === file.id 
+            ? { ...f, isSaved: true, dbId: result.data.id }
+            : f
+        ))
+        setError(null)
+      } else {
+        setError(result.error || 'Failed to save file')
+      }
+    } catch (err) {
+      console.error('Failed to upload file:', err)
+      setError('Failed to save file to database')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Save all unsaved files to database
+  const saveAllToDatabase = async () => {
+    const unsavedFiles = audioFiles.filter(f => !f.isSaved && f.blob.size > 0)
+    if (unsavedFiles.length === 0) return
+    
+    setIsUploading(true)
+    try {
+      for (const file of unsavedFiles) {
+        await saveFileToDatabase(file)
+      }
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Delete file from database and local
+  const deleteFile = useCallback(async (id: string) => {
+    const file = audioFiles.find(f => f.id === id)
+    
+    // If file is saved in database, delete from DB first
+    if (file?.dbId) {
+      try {
+        const supabase = createClient()
+        // Delete from storage
+        if (file.file_path) {
+          await supabase.storage.from('audio-files').remove([file.file_path])
+        }
+        // Delete from database
+        await supabase.from('audio_files').delete().eq('id', file.dbId)
+      } catch (err) {
+        console.error('Failed to delete from database:', err)
+      }
+    }
+    
     setAudioFiles(prev => {
       const file = prev.find(f => f.id === id)
       if (file) {
@@ -152,7 +334,7 @@ export default function VoiceRecorderPage() {
       newSet.delete(id)
       return newSet
     })
-  }, [])
+  }, [audioFiles])
 
   // Delete selected files
   const deleteSelectedFiles = useCallback(() => {
@@ -597,6 +779,22 @@ export default function VoiceRecorderPage() {
             </div>
           )}
 
+          {/* Save All to Database Button */}
+          {audioFiles.some(f => !f.isSaved) && selectedFiles.size === 0 && (
+            <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-xl mb-4">
+              <span className="text-sm font-medium text-green-600">
+                {audioFiles.filter(f => !f.isSaved).length} unsaved file(s)
+              </span>
+              <button
+                onClick={saveAllToDatabase}
+                disabled={isUploading}
+                className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
+              >
+                {isUploading ? '⏳' : '💾'} Save All to Database
+              </button>
+            </div>
+          )}
+
           {/* File List */}
           <div className="space-y-2">
             {audioFiles.map((file, index) => (
@@ -655,7 +853,15 @@ export default function VoiceRecorderPage() {
                     </div>
                   ) : (
                     <>
-                      <p className="font-medium text-sm truncate">{file.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm truncate">{file.name}</p>
+                        {file.isSaved && (
+                          <span className="text-green-500 text-xs" title="Saved to database">✓</span>
+                        )}
+                        {!file.isSaved && (
+                          <span className="text-amber-500 text-xs" title="Not saved">●</span>
+                        )}
+                      </div>
                       <p className="text-xs text-tx3">
                         {formatFileSize(file.size)} • {file.createdAt.toLocaleTimeString()}
                       </p>
@@ -674,6 +880,17 @@ export default function VoiceRecorderPage() {
                 )}
 
                 <div className="flex items-center gap-1">
+                  {!file.isSaved && (
+                    <button
+                      onClick={() => saveFileToDatabase(file)}
+                      disabled={isUploading}
+                      className="p-1.5 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                      title="Save to Database"
+                    >
+                      <span className="text-xs">💾</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => moveFile(index, 'up')}
                     disabled={index === 0}
@@ -703,7 +920,7 @@ export default function VoiceRecorderPage() {
                     className="p-1.5 rounded-lg hover:bg-surface3 transition-colors disabled:opacity-50"
                     title="Export"
                   >
-                    <span className="text-xs">💾</span>
+                    <span className="text-xs">�</span>
                   </button>
 
                   <button
