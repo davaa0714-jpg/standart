@@ -29,6 +29,7 @@ export function AdminSidebar({
     { label: 'Үүрэг даалгавар', href: '/admin/tasks', icon: '✅' },
     { label: 'Багийн гүйцэтгэл', href: '/admin/biyelelt', icon: '📈' },
     { label: 'Тайлан экспорт', href: '/admin/export', icon: '📤' },
+    { label: 'Дуу хураах', href: '/recorder', icon: '🎙️' },
   ]
 
   const bottomItems: SidebarItem[] = [

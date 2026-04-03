@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ManagerSidebar } from './ManagerSidebar'
-import { EmployeeSidebar } from './EmployeeSidebar'
 import { Header } from '@/components/layout/Header'
 import { ToastProvider } from '@/components/ui/Toast'
 

@@ -27,7 +27,18 @@ export default async function MeetingsPage() {
           <h1 className="text-xl font-bold">Хурлын жагсаалт</h1>
           <p className="text-sm text-tx2 mt-0.5">Газрын шуурхай хурлын бүртгэл</p>
         </div>
-        {isAdmin && <MeetingFormButton orgId={profile?.org_id ?? ''} userId={user.id} />}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <Link 
+              href="/recorder"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium hover:bg-surface2 transition-colors"
+            >
+              <span>🎙️</span>
+              Дуу хураах
+            </Link>
+            <MeetingFormButton orgId={profile?.org_id ?? ''} userId={user.id} />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
