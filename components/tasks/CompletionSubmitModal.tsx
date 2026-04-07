@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { StatusPill, TypeTag, ProgressBar } from '@/components/ui/Badges'
+import { PRIORITY_LABELS, STATUS_LABELS, TASK_TYPE_LABELS } from '@/types/database'
 import type { TaskFull, TaskStatus } from '@/types/database'
 
 interface EditableTask extends TaskFull {
@@ -21,10 +22,12 @@ export function CompletionSubmitModal({ tasks }: CompletionSubmitModalProps) {
   const [editableTasks, setEditableTasks] = useState<EditableTask[]>(tasks)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   // Filter tasks
   const pendingTasks = editableTasks.filter(t => ['new', 'in_progress', 'overdue'].includes(t.status))
   const submittedTasks = editableTasks.filter(t => t.status === 'submitted' || t.status === 'reviewing')
+  const tasksInActiveTab = activeTab === 'pending' ? pendingTasks : submittedTasks
 
   // Handle progress change
   const handleProgressChange = (taskId: string, value: number) => {
@@ -39,6 +42,20 @@ export function CompletionSubmitModal({ tasks }: CompletionSubmitModalProps) {
       t.id === taskId ? { ...t, editedNote: value } : t
     ))
   }
+
+  useEffect(() => {
+    if (!tasksInActiveTab.length) {
+      setSelectedTaskId(null)
+      return
+    }
+
+    setSelectedTaskId(prev => {
+      if (prev && tasksInActiveTab.some(t => t.id === prev)) return prev
+      return tasksInActiveTab[0].id
+    })
+  }, [tasksInActiveTab, activeTab])
+
+  const selectedTask = editableTasks.find(t => t.id === selectedTaskId) ?? null
 
   // Save changes
   const handleSave = async () => {
@@ -140,7 +157,7 @@ export function CompletionSubmitModal({ tasks }: CompletionSubmitModalProps) {
               <p>Илгээсэн үүрэг алга</p>
             </div>
           )}
-          {(activeTab === 'pending' ? pendingTasks : submittedTasks).length > 0 && (
+          {tasksInActiveTab.length > 0 && (
             <table className="w-full">
               <thead className="bg-surface2 sticky top-0">
                 <tr className="text-left text-xs text-tx3">
@@ -154,15 +171,22 @@ export function CompletionSubmitModal({ tasks }: CompletionSubmitModalProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(activeTab === 'pending' ? pendingTasks : submittedTasks).map((task) => (
-                  <tr key={task.id} className="hover:bg-surface2/30 transition-colors">
+                {tasksInActiveTab.map((task) => (
+                  <tr
+                    key={task.id}
+                    className={`hover:bg-surface2/30 transition-colors ${selectedTaskId === task.id ? 'bg-accent/5' : ''}`}
+                  >
                     <td className="px-3 py-3">
-                      <Link
-                        href={`/tasks/${task.id}`}
-                        className="font-medium hover:text-accent-light transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaskId(task.id)}
+                        className={`w-full text-left font-medium text-sm transition-colors ${
+                          selectedTaskId === task.id ? 'text-accent-light' : 'text-tx'
+                        } hover:text-accent-light`}
+                        aria-pressed={selectedTaskId === task.id}
                       >
                         {task.title}
-                      </Link>
+                      </button>
                       <p className="text-xs text-tx3 mt-0.5">{task.meeting_title}</p>
                     </td>
                     <td className="px-3 py-3">
@@ -218,6 +242,72 @@ export function CompletionSubmitModal({ tasks }: CompletionSubmitModalProps) {
               </tbody>
             </table>
           )}
+          <div className="mt-6 border border-border rounded-2xl bg-surface p-5 shadow-sm">
+            {selectedTask ? (
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-tx3">Сонгогдсон биелэлт</div>
+                    <h3 className="text-lg font-semibold text-tx">{selectedTask.title}</h3>
+                    {selectedTask.meeting_title && (
+                      <p className="text-sm text-tx2 mt-1">{selectedTask.meeting_title}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <TypeTag type={selectedTask.task_type} />
+                    <StatusPill status={selectedTask.status} />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Төрөл</div>
+                    <div className="text-sm font-medium">{TASK_TYPE_LABELS[selectedTask.task_type]}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Хариуцагч</div>
+                    <div className="text-sm font-medium">{selectedTask.assignee_name ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Хугацаа</div>
+                    <div className="text-sm font-medium">{selectedTask.deadline}</div>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Давтамж</div>
+                    <div className="text-sm font-medium">{selectedTask.priority ? PRIORITY_LABELS[selectedTask.priority] : '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Статус</div>
+                    <div className="text-sm font-medium">{STATUS_LABELS[selectedTask.status]}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-tx3">Гүйцэтгэл</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <ProgressBar value={selectedTask.editedProgress ?? selectedTask.progress} />
+                      <span className="text-xs text-tx3 font-mono">
+                        {selectedTask.editedProgress ?? selectedTask.progress}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase text-tx3">Тайлбар</div>
+                  <p className="text-sm text-tx2">
+                    {selectedTask.description || 'Тайлбар ороогүй байна.'}
+                  </p>
+                </div>
+                <div>
+                  <div className="text-xs uppercase text-tx3">Тэмдэглэл</div>
+                  <p className="text-sm text-tx2">
+                    {(selectedTask.editedNote ?? selectedTask.submitted_note) || 'Тэмдэглэл байхгүй'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-tx3">Сонгох биелэлт алга байна</div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
