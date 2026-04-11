@@ -19,7 +19,7 @@ export function TaskFormModal({ open, onClose, onSaved, orgId, currentUserId }: 
   const { success, error: toastErr } = useToast()
   const [loading, setLoading] = useState(false)
   const [profiles, setProfiles] = useState<Array<Pick<Profile, 'id' | 'full_name' | 'position'>>>([])
-  const [meetings, setMeetings]  = useState<Array<Pick<Meeting, 'id' | 'title' | 'meeting_no'>>>([])
+  const [meetings, setMeetings]  = useState<Array<Pick<Meeting, 'id' | 'meeting_date' | 'notes'>>>([])
 
   const [form, setForm] = useState({
     title: '', description: '', task_type: 'uureg' as TaskType,
@@ -32,8 +32,8 @@ export function TaskFormModal({ open, onClose, onSaved, orgId, currentUserId }: 
     const supabase = createClient()
     supabase.from('profiles').select('id,full_name,position').eq('org_id', orgId).eq('is_active', true)
       .then(({ data }) => setProfiles(data ?? []))
-    supabase.from('meetings').select('id,title,meeting_no').eq('org_id', orgId).eq('status', 'open')
-      .order('held_at', { ascending: false })
+    supabase.from('meetings').select('id,meeting_date,notes').eq('org_id', orgId).eq('status', 'scheduled')
+      .order('meeting_date', { ascending: false })
       .then(({ data }) => setMeetings(data ?? []))
   }, [open, orgId])
 
@@ -141,7 +141,7 @@ export function TaskFormModal({ open, onClose, onSaved, orgId, currentUserId }: 
             <Select value={form.meeting_id} onChange={set('meeting_id')}>
               <option value="">— Хурал сонгох —</option>
               {meetings.map(m => (
-                <option key={m.id} value={m.id}>{m.title}</option>
+                <option key={m.id} value={m.id}>{new Date(m.meeting_date).toLocaleDateString('mn-MN')}</option>
               ))}
             </Select>
           </div>

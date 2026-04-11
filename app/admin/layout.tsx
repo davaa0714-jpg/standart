@@ -28,16 +28,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single() as { data: Profile | null }
 
+  // Restrict access to admin and director roles only
+  if (!profile?.role || !['admin', 'director'].includes(profile.role)) {
+    if (profile?.role === 'manager') {
+      redirect('/manager')
+    } else {
+      redirect('/employee')
+    }
+  }
+
   const { count: overdueCount } = await supabase
     .from('tasks')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'overdue')
 
-  const { count: unreadCount } = await supabase
+  const { count: unreadCount, data: notifData } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', user.id)
     .eq('is_read', false)
+  console.log('ADMIN NOTIFICATION DEBUG:', { userId: user.id, unreadCount, notifData })
 
   return (
     <ToastProvider>
@@ -51,19 +61,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             profile={profile}
             unreadCount={unreadCount ?? 0}
           />
-          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn relative">
-            {/* Debug Info */}
-            <div className="mb-4 p-3 bg-accent/10 border border-accent/30 rounded-lg text-xs font-mono">
-              <div className="flex items-center gap-2 text-accent-light font-bold mb-1">
-                <span>🔧 DEBUG:</span>
-                <span>Admin Layout</span>
-              </div>
-              <div className="text-tx2 space-y-0.5">
-                <div>User ID: {user.id}</div>
-                <div>Role: {profile?.role || 'N/A'}</div>
-                <div>Layout: AdminLayout</div>
-              </div>
-            </div>
+          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn">
             {children}
           </main>
         </div>

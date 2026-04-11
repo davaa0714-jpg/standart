@@ -162,8 +162,8 @@ export default async function ManagerDashboardPage() {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium truncate">{m.title}</h3>
-                          <p className="text-[11px] text-tx3 mt-0.5">{m.held_at}</p>
+                          <h3 className="text-sm font-medium truncate">Khural - {new Date(m.meeting_date).toLocaleDateString('mn-MN')}</h3>
+                          <p className="text-[11px] text-tx3 mt-0.5">{new Date(m.meeting_date).toLocaleDateString('mn-MN')}</p>
                         </div>
                         <span className={`text-sm font-bold font-mono ${pct >= 80 ? 'text-accent-light' : pct >= 50 ? 'text-warn-light' : 'text-danger-light'}`}>
                           {pct}%

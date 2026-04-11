@@ -28,6 +28,15 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     .eq('id', user.id)
     .single() as { data: Profile | null }
 
+  // Restrict access to manager role only
+  if (!profile?.role || profile.role !== 'manager') {
+    if (profile?.role === 'admin' || profile?.role === 'director') {
+      redirect('/admin')
+    } else {
+      redirect('/employee')
+    }
+  }
+
   const { count: overdueCount } = await supabase
     .from('tasks')
     .select('*', { count: 'exact', head: true })

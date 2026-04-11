@@ -1,2 +1,2 @@
 // Employee meetings page
-export { default } from '@/app/meetings/page'
+export { default } from '@/app/admin/meetings/page'

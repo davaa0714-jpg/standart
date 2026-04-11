@@ -48,6 +48,7 @@ export default function VoiceRecorderPage() {
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp3' | 'wav'>('webm')
   const [isConverting, setIsConverting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'director' | null>(null)
   
   // Multiple files state
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([])
@@ -62,6 +63,27 @@ export default function VoiceRecorderPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Get user role on mount
+  useEffect(() => {
+    const getUserRole = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          setUserRole(profile?.role || null)
+        }
+      } catch (err) {
+        console.error('Failed to get user role:', err)
+      }
+    }
+    getUserRole()
+  }, [])
 
   // Check browser support
   useEffect(() => {
@@ -655,6 +677,19 @@ export default function VoiceRecorderPage() {
 
       {/* Recording Area */}
       <div className="bg-surface border border-border rounded-2xl p-8 mb-6">
+        {/* Admin Warning */}
+        {userRole === 'admin' && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3">
+            <span className="text-xl">👁️</span>
+            <div className="flex-1">
+              <p className="text-sm text-amber-400 font-medium">Админ хэрэглэгчид зөвхөн харах эрхтэй</p>
+              <p className="text-xs text-amber-400/70 mt-1">
+                Та бичлэг хийх, импорт хийх эрхгүй. Зөвхөн байгаа бичлэгүүдийг харж, татаж авах боломжтой.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Status & Timer */}
         <div className="text-center mb-8">
           <div className={`text-sm font-medium mb-2 ${getStatusColor()}`}>
@@ -669,12 +704,15 @@ export default function VoiceRecorderPage() {
         <div className="flex justify-center mb-8">
           <button
             onClick={isRecording ? stopRecording : startRecording}
+            disabled={userRole === 'admin'}
             className={`
               relative w-32 h-32 rounded-full flex items-center justify-center
               transition-all duration-300 transform hover:scale-105 active:scale-95
-              ${isRecording 
-                ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30' 
-                : 'bg-gradient-to-br from-accent to-accent-light hover:shadow-xl hover:shadow-accent/30'
+              ${userRole === 'admin' 
+                ? 'bg-gray-500 cursor-not-allowed opacity-50' 
+                : isRecording 
+                  ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30' 
+                  : 'bg-gradient-to-br from-accent to-accent-light hover:shadow-xl hover:shadow-accent/30'
               }
             `}
           >
@@ -717,12 +755,13 @@ export default function VoiceRecorderPage() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isRecording}
-            className="
+            disabled={isRecording || userRole === 'admin'}
+            className={`
               px-4 py-2 rounded-xl border border-border bg-surface2
               hover:bg-surface3 transition-colors disabled:opacity-50
               flex items-center gap-2 text-sm font-medium
-            "
+              ${userRole === 'admin' ? 'cursor-not-allowed' : ''}
+            `}
           >
             <span>📁</span>
             Import Audio

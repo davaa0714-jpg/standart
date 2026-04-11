@@ -24,11 +24,10 @@ export function AdminSidebar({
   const path = usePathname()
 
   const navItems: SidebarItem[] = [
-    { label: 'Удирдлагын самбар', href: '/admin', icon: '📊' },
-    { label: 'Хурлын жагсаалт', href: '/admin/meetings', icon: '📋' },
-    { label: 'Үүрэг даалгавар', href: '/admin/tasks', icon: '✅' },
-    { label: 'Багийн гүйцэтгэл', href: '/admin/biyelelt', icon: '📈' },
-    { label: 'Тайлан экспорт', href: '/admin/export', icon: '📤' },
+    { label: 'Хянагийн самбар', href: '/admin', icon: '📊' },
+    { label: 'Хурлын жагсаалт', href: '/admin/meetings', icon: '📝' },
+    { label: 'Үүрэг даалгавар', href: '/admin/tasks', icon: '📅' },
+    { label: 'Баримлат хянах', href: '/admin/biyelelt', icon: '📁' },
     { label: 'Дуу хураах', href: '/recorder', icon: '🎙️' },
   ]
 

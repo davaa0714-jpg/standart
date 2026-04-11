@@ -28,6 +28,7 @@ export function EmployeeSidebar({
     { label: 'Миний үүрэг', href: '/employee/tasks', icon: '✅' },
     { label: 'Хурлууд', href: '/employee/meetings', icon: '📋' },
     { label: 'Биелэлт илгээх', href: '/employee/biyelelt', icon: '📤' },
+    { label: 'Дуу хураах', href: '/employee/recorder', icon: '🎙️' },
   ]
 
   const bottomItems: SidebarItem[] = [

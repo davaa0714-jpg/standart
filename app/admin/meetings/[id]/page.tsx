@@ -12,7 +12,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: meeting } = await supabase.from('meeting_stats').select('*').eq('id', params.id).single() as { data: MeetingStats | null }
+  const { data: meeting } = await supabase.from('meetings').select('*').eq('id', params.id).single()
   if (!meeting) notFound()
 
   const { data: tasks } = await supabase
@@ -21,13 +21,17 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single() as { data: Profile | null }
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
-  const pct = meeting.total_tasks ? Math.round(meeting.done_tasks / meeting.total_tasks * 100) : 0
+  const pct = tasks ? Math.round(tasks.filter(t => t.status === 'done').length / tasks.length * 100) : 0
+
+  const totalTasks = tasks?.length || 0
+  const doneTasks = tasks?.filter(t => t.status === 'done').length || 0
+  const overdueTasks = tasks?.filter(t => t.status === 'overdue').length || 0
 
   return (
     <div className="max-w-[1000px] mx-auto">
       {/* Breadcrumb */}
       <div className="text-xs text-tx3 mb-4">
-        <Link href="/meetings" className="hover:text-tx">Хурлууд</Link> / <span className="text-tx2">{meeting.title}</span>
+        <Link href="/admin/meetings" className="hover:text-tx">Khurluud</Link> / <span className="text-tx2">{new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}</span>
       </div>
 
       {/* Header */}
@@ -35,25 +39,25 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant={meeting.status === 'open' ? 'success' : 'default'}>
-                {meeting.status === 'open' ? 'Нээлттэй' : 'Хаагдсан'}
+              <Badge variant={meeting.status === 'scheduled' ? 'success' : 'default'}>
+                {meeting.status === 'scheduled' ? 'Tovlogdson' : meeting.status === 'held' ? 'Bolson' : 'Tsutsuldsan'}
               </Badge>
             </div>
-            <h1 className="text-xl font-bold">{meeting.title}</h1>
+            <h1 className="text-xl font-bold">Khural - {new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}</h1>
             <div className="flex items-center gap-4 mt-2 text-sm text-tx2">
-              <span className="font-mono">{meeting.held_at}</span>
-              {meeting.chair_name && <span>Даргалагч: {meeting.chair_name}</span>}
-              {(meeting as any).location && <span>📍 {(meeting as any).location}</span>}
+              <span className="font-mono">{new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}</span>
+              {meeting.held_date && <span>Bolson: {new Date(meeting.held_date).toLocaleDateString('mn-MN')}</span>}
+              {meeting.location && <span> : {meeting.location}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {isAdmin && <ExportButton tasks={tasks ?? []} title={meeting.title} />}
+            {isAdmin && <ExportButton tasks={tasks ?? []} title={`Khural - ${new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}`} />}
           </div>
         </div>
 
         <div className="mt-4">
           <div className="flex justify-between text-xs text-tx3 mb-1.5">
-            <span>Нийт биелэлт</span>
+            <span>Niit biyelelt</span>
             <span className="font-mono font-bold text-tx">{pct}%</span>
           </div>
           <ProgressBar value={pct} />
@@ -61,10 +65,10 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
 
         <div className="grid grid-cols-4 gap-3 mt-4">
           {[
-            { label: 'Нийт', val: meeting.total_tasks, color: 'text-primary-light' },
-            { label: 'Биелсэн', val: meeting.done_tasks, color: 'text-accent-light' },
-            { label: 'Үлдсэн', val: meeting.total_tasks - meeting.done_tasks, color: 'text-warn-light' },
-            { label: 'Хэтэрсэн', val: meeting.overdue_tasks, color: 'text-danger-light' },
+            { label: 'Niit', val: totalTasks, color: 'text-primary-light' },
+            { label: 'Bielsn', val: doneTasks, color: 'text-accent-light' },
+            { label: 'Uldsn', val: totalTasks - doneTasks, color: 'text-warn-light' },
+            { label: 'Khetrsen', val: overdueTasks, color: 'text-danger-light' },
           ].map(({ label, val, color }) => (
             <div key={label} className="bg-surface2 rounded p-3 text-center">
               <div className={`text-xl font-bold font-mono ${color}`}>{val}</div>
@@ -77,11 +81,11 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
       {/* Task list */}
       <div className="bg-surface border border-border rounded-lg overflow-hidden">
         <div className="px-4 py-3 bg-surface2 border-b border-border flex items-center justify-between">
-          <h2 className="text-sm font-bold">Үүрэг даалгаварууд</h2>
-          <span className="text-xs text-tx3">{tasks?.length ?? 0} үүрэг</span>
+          <h2 className="text-sm font-bold">Uureg daalgavaruud</h2>
+          <span className="text-xs text-tx3">{tasks?.length ?? 0} uureg</span>
         </div>
         {!tasks?.length ? (
-          <div className="text-center py-12 text-tx3 text-sm">Үүрэг байхгүй байна</div>
+          <div className="text-center py-12 text-tx3 text-sm">Uureg baikhgui baina</div>
         ) : tasks.map((task: TaskFull) => (
           <Link key={task.id} href={`/tasks/${task.id}`}
             className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-surface2 transition-colors group"

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { ROLE_LABELS } from '@/types/database'
@@ -15,6 +16,9 @@ interface HeaderProps {
 export function Header({ profile, unreadCount = 0, pageTitle }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
+  
+  console.log('HEADER DEBUG:', { unreadCount, profileId: profile?.id })
+  console.log('NOTIFICATION BADGE DEBUG:', { shouldShow: unreadCount > 0, displayCount: unreadCount > 9 ? '9+' : unreadCount })
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -38,14 +42,14 @@ export function Header({ profile, unreadCount = 0, pageTitle }: HeaderProps) {
       {/* Right */}
       <div className="flex items-center gap-3">
         {/* Notifications */}
-        <button className="relative w-8 h-8 flex items-center justify-center rounded border border-border text-tx2 hover:bg-surface3 hover:text-tx transition-colors text-base">
+        <Link href="/notifications" className="relative w-8 h-8 flex items-center justify-center rounded border border-border text-tx2 hover:bg-surface3 hover:text-tx transition-colors text-base">
           🔔
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold bg-danger rounded-full text-white">
+            <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold bg-danger rounded-full text-white z-50 border-2 border-bg">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </button>
+        </Link>
 
         {/* User menu */}
         <div className="relative">

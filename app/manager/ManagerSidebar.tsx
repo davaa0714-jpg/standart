@@ -28,7 +28,7 @@ export function ManagerSidebar({
     { label: 'Хурлын жагсаалт', href: '/manager/meetings', icon: '📋' },
     { label: 'Үүрэг даалгавар', href: '/manager/tasks', icon: '✅' },
     { label: 'Биелэлт хянах', href: '/manager/biyelelt', icon: '📈' },
-    { label: 'Дуу хураах', href: '/recorder', icon: '🎙️' },
+    { label: 'Дуу хураах', href: '/manager/recorder', icon: '🎙️' },
   ]
 
   const bottomItems: SidebarItem[] = [

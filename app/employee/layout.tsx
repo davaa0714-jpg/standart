@@ -27,6 +27,13 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     .eq('id', user.id)
     .single() as { data: Profile | null }
 
+  // Redirect non-staff users to appropriate pages
+  if (profile?.role === 'admin' || profile?.role === 'director') {
+    redirect('/admin')
+  } else if (profile?.role === 'manager') {
+    redirect('/manager')
+  }
+
   const { count: overdueCount } = await supabase
     .from('tasks')
     .select('*', { count: 'exact', head: true })

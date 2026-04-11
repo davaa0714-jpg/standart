@@ -17,9 +17,15 @@ export default async function DirectorLayout({ children }: { children: React.Rea
     .eq('id', user.id)
     .single() as { data: Profile | null }
 
-  // Check if user has director role
-  if (profile?.role !== 'director' && profile?.role !== 'admin') {
-    redirect('/manager')
+  // Check if user has director role only
+  if (!profile?.role || profile.role !== 'director') {
+    if (profile?.role === 'admin') {
+      redirect('/admin')
+    } else if (profile?.role === 'manager') {
+      redirect('/manager')
+    } else {
+      redirect('/employee')
+    }
   }
 
   const { count: overdueCount } = await supabase
@@ -27,11 +33,19 @@ export default async function DirectorLayout({ children }: { children: React.Rea
     .select('*', { count: 'exact', head: true })
     .eq('status', 'overdue')
 
-  const { count: unreadCount } = await supabase
-    .from('notifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('profile_id', user.id)
-    .eq('is_read', false)
+  let unreadCount = 0
+  try {
+    const result = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', user.id)
+      .eq('is_read', false)
+    unreadCount = result.count ?? 0
+    console.log('NOTIFICATION DEBUG:', { userId: user.id, unreadCount, result })
+  } catch (err) {
+    // notifications table doesn't exist yet
+    console.log('Notifications table not found:', err)
+  }
 
   return (
     <ToastProvider>
@@ -46,18 +60,6 @@ export default async function DirectorLayout({ children }: { children: React.Rea
             unreadCount={unreadCount ?? 0}
           />
           <main className="flex-1 overflow-y-auto p-6 animate-fadeIn relative">
-            {/* Debug Info */}
-            <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs font-mono">
-              <div className="flex items-center gap-2 text-purple-400 font-bold mb-1">
-                <span>🔧 DEBUG:</span>
-                <span>Director Layout</span>
-              </div>
-              <div className="text-tx2 space-y-0.5">
-                <div>User ID: {user.id}</div>
-                <div>Role: {profile?.role || 'N/A'}</div>
-                <div>Layout: DirectorLayout</div>
-              </div>
-            </div>
             {children}
           </main>
         </div>

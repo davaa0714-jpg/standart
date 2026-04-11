@@ -2,7 +2,7 @@ export type Role = 'admin' | 'director' | 'manager' | 'staff'
 export type TaskType = 'uureg' | 'daalgavar' | 'medeelel'
 export type Priority = 'high' | 'mid' | 'low'
 export type TaskStatus = 'new' | 'in_progress' | 'submitted' | 'reviewing' | 'done' | 'overdue'
-export type MeetingStatus = 'open' | 'closed'
+export type MeetingStatus = 'scheduled' | 'held' | 'cancelled'
 export type NotifType = 'deadline_near' | 'deadline_overdue' | 'submitted' | 'reviewed' | 'approved' | 'rejected' | 'assigned'
 export type ExportType = 'word' | 'excel' | 'pdf'
 
@@ -101,15 +101,12 @@ export interface Profile {
 export interface Meeting {
   id: string
   org_id: string | null
-  title: string
-  meeting_no: number | null
-  held_at: string
-  location: string | null
-  chair_id: string | null
-  secretary_id: string | null
-  note: string | null
-  status: MeetingStatus
   created_by: string | null
+  meeting_date: string
+  held_date: string | null
+  location: string | null
+  notes: string | null
+  status: 'scheduled' | 'held' | 'cancelled'
   created_at: string
   updated_at: string
 }

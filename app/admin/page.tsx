@@ -13,7 +13,6 @@ export const revalidate = 0
 export default async function AdminDashboardPage() {
   const supabase = createClient()
   const { data: { user }, error: userError } = await supabase.auth.getUser()
-  console.log('USER DEBUG:', { userId: user?.id, userError, hasUser: !!user })
   if (!user) redirect('/auth/login')
 
   const { data: profile, error: profileError } = await supabase
@@ -22,19 +21,12 @@ export default async function AdminDashboardPage() {
     .eq('id', user.id)
     .maybeSingle()
   
-  console.log('PROFILE DEBUG:', { profile, profileError, userId: user.id, query: `id eq ${user.id}` })
   
   const typedProfile = profile as Profile | null
 
-  // Temporary hardcoded admin for debugging - bypass role check completely for this user
-  if (user.id === '6b64f2f9-7215-4d23-81d1-e2a8f22936d0') {
-    console.log('HARDCODED ADMIN:', user.id)
-    // Force admin access - skip all redirects
-  } else {
-    const isAdmin = typedProfile?.role === 'admin'
-    if (!isAdmin) {
-      redirect('/employee')
-    }
+  const isAdmin = typedProfile?.role === 'admin'
+  if (!isAdmin) {
+    redirect('/employee')
   }
 
   const orgId = typedProfile?.org_id ?? ''
@@ -196,8 +188,8 @@ export default async function AdminDashboardPage() {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium truncate">{meeting.title}</h3>
-                          <p className="text-[11px] text-tx3 mt-0.5">{meeting.held_at}</p>
+                          <h3 className="text-sm font-medium truncate">Khural - {new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}</h3>
+                          <p className="text-[11px] text-tx3 mt-0.5">{new Date(meeting.meeting_date).toLocaleDateString('mn-MN')}</p>
                         </div>
                         <span className={`text-sm font-bold font-mono ${pct >= 80 ? 'text-accent-light' : pct >= 50 ? 'text-warn-light' : 'text-danger-light'}`}>
                           {pct}%
