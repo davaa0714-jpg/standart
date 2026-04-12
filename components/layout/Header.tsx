@@ -17,8 +17,6 @@ export function Header({ profile, unreadCount = 0, pageTitle }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
   
-  console.log('HEADER DEBUG:', { unreadCount, profileId: profile?.id })
-  console.log('NOTIFICATION BADGE DEBUG:', { shouldShow: unreadCount > 0, displayCount: unreadCount > 9 ? '9+' : unreadCount })
 
   const handleLogout = async () => {
     const supabase = createClient()

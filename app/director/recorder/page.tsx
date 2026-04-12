@@ -38,7 +38,7 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
-export default function VoiceRecorderPage() {
+export default function DirectorRecorderPage() {
   // State
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
@@ -391,22 +391,6 @@ export default function VoiceRecorderPage() {
     setEditName('')
   }, [])
 
-  // Reorder files
-  const moveFile = useCallback((index: number, direction: 'up' | 'down') => {
-    setAudioFiles(prev => {
-      const newFiles = [...prev]
-      const newIndex = direction === 'up' ? index - 1 : index + 1
-      
-      if (newIndex < 0 || newIndex >= newFiles.length) return prev
-      
-      const temp = newFiles[index]
-      newFiles[index] = newFiles[newIndex]
-      newFiles[newIndex] = temp
-      
-      return newFiles
-    })
-  }, [])
-
   // Toggle file selection
   const toggleSelection = useCallback((id: string) => {
     setSelectedFiles(prev => {
@@ -638,7 +622,7 @@ export default function VoiceRecorderPage() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-surface rounded-2xl border border-border p-8 text-center">
-          <div className="text-6xl mb-4">⚠️</div>
+          <div className="text-6xl mb-4">???</div>
           <h1 className="text-xl font-bold mb-2">Browser Not Supported</h1>
           <p className="text-tx2">{error}</p>
         </div>
@@ -651,7 +635,7 @@ export default function VoiceRecorderPage() {
       {/* Page Title */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent-light/20 flex items-center justify-center">
-          <span className="text-xl">🎙️</span>
+          <span className="text-xl">????</span>
         </div>
         <div>
           <h1 className="text-lg font-bold">Voice Recorder</h1>
@@ -662,7 +646,7 @@ export default function VoiceRecorderPage() {
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-xl flex items-start gap-3">
-          <span className="text-xl">⚠️</span>
+          <span className="text-xl">???</span>
           <div className="flex-1">
             <p className="text-sm text-danger-light">{error}</p>
             <button 
@@ -677,14 +661,14 @@ export default function VoiceRecorderPage() {
 
       {/* Recording Area */}
       <div className="bg-surface border border-border rounded-2xl p-8 mb-6">
-        {/* Admin Warning */}
-        {userRole === 'admin' && (
-          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3">
-            <span className="text-xl">👁️</span>
+        {/* Director Warning */}
+        {userRole === 'director' && (
+          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-start gap-3">
+            <span className="text-xl">????</span>
             <div className="flex-1">
-              <p className="text-sm text-amber-400 font-medium">Админ хэрэглэгчид зөвхөн харах эрхтэй</p>
-              <p className="text-xs text-amber-400/70 mt-1">
-                Та бичлэг хийх, импорт хийх эрхгүй. Зөвхөн байгаа бичлэгүүдийг харж, татаж авах боломжтой.
+              <p className="text-sm text-blue-400 font-medium">Director Access</p>
+              <p className="text-xs text-blue-400/70 mt-1">
+                You have full recording and management privileges.
               </p>
             </div>
           </div>
@@ -704,15 +688,12 @@ export default function VoiceRecorderPage() {
         <div className="flex justify-center mb-8">
           <button
             onClick={isRecording ? stopRecording : startRecording}
-            disabled={userRole === 'admin'}
             className={`
               relative w-32 h-32 rounded-full flex items-center justify-center
               transition-all duration-300 transform hover:scale-105 active:scale-95
-              ${userRole === 'admin' 
-                ? 'bg-gray-500 cursor-not-allowed opacity-50' 
-                : isRecording 
-                  ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30' 
-                  : 'bg-gradient-to-br from-accent to-accent-light hover:shadow-xl hover:shadow-accent/30'
+              ${isRecording 
+                ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30' 
+                : 'bg-gradient-to-br from-accent to-accent-light hover:shadow-xl hover:shadow-accent/30'
               }
             `}
           >
@@ -724,7 +705,7 @@ export default function VoiceRecorderPage() {
             )}
             
             <span className="text-4xl relative z-10">
-              {isRecording ? '⏹️' : '🎙️'}
+              {isRecording ? '????' : '????'}
             </span>
           </button>
         </div>
@@ -740,7 +721,7 @@ export default function VoiceRecorderPage() {
                 flex items-center gap-2 text-sm font-medium
               "
             >
-              <span>{isPaused ? '▶️' : '⏸️'}</span>
+              <span>{isPaused ? '????' : '????'}</span>
               {isPaused ? 'Resume' : 'Pause'}
             </button>
           )}
@@ -755,15 +736,14 @@ export default function VoiceRecorderPage() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isRecording || userRole === 'admin'}
-            className={`
+            disabled={isRecording}
+            className="
               px-4 py-2 rounded-xl border border-border bg-surface2
               hover:bg-surface3 transition-colors disabled:opacity-50
               flex items-center gap-2 text-sm font-medium
-              ${userRole === 'admin' ? 'cursor-not-allowed' : ''}
-            `}
+            "
           >
-            <span>📁</span>
+            <span>????</span>
             Import Audio
           </button>
         </div>
@@ -805,14 +785,14 @@ export default function VoiceRecorderPage() {
                   disabled={isConverting}
                   className="px-3 py-1.5 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-light transition-colors disabled:opacity-50"
                 >
-                  {isConverting ? '⏳' : '📤'} Export
+                  {isConverting ? '????' : '????'} Export
                 </button>
                 
                 <button
                   onClick={deleteSelectedFiles}
                   className="px-3 py-1.5 bg-danger/10 text-danger-light rounded-lg text-xs font-medium hover:bg-danger/20 transition-colors"
                 >
-                  🗑️ Delete
+                  ????? Delete
                 </button>
               </div>
             </div>
@@ -829,7 +809,7 @@ export default function VoiceRecorderPage() {
                 disabled={isUploading}
                 className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
               >
-                {isUploading ? '⏳' : '💾'} Save All to Database
+                {isUploading ? '????' : '????'} Save All to Database
               </button>
             </div>
           )}
@@ -859,7 +839,7 @@ export default function VoiceRecorderPage() {
                   className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
                 >
                   <span className="text-sm">
-                    {currentPlayingId === file.id ? '⏸️' : '▶️'}
+                    {currentPlayingId === file.id ? '????' : '????'}
                   </span>
                 </button>
 
@@ -881,13 +861,13 @@ export default function VoiceRecorderPage() {
                         onClick={saveRename}
                         className="text-green-500 hover:text-green-600"
                       >
-                        ✓
+                        ??
                       </button>
                       <button
                         onClick={cancelRename}
                         className="text-tx3 hover:text-tx"
                       >
-                        ✕
+                        ??
                       </button>
                     </div>
                   ) : (
@@ -895,14 +875,14 @@ export default function VoiceRecorderPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm truncate">{file.name}</p>
                         {file.isSaved && (
-                          <span className="text-green-500 text-xs" title="Saved to database">✓</span>
+                          <span className="text-green-500 text-xs" title="Saved to database">??</span>
                         )}
                         {!file.isSaved && (
-                          <span className="text-amber-500 text-xs" title="Not saved">●</span>
+                          <span className="text-amber-500 text-xs" title="Not saved">??</span>
                         )}
                       </div>
                       <p className="text-xs text-tx3">
-                        {formatFileSize(file.size)} • {file.createdAt.toLocaleTimeString()}
+                        {formatFileSize(file.size)} ? {file.createdAt.toLocaleTimeString()}
                       </p>
                     </>
                   )}
@@ -919,70 +899,32 @@ export default function VoiceRecorderPage() {
                 )}
 
                 <div className="flex items-center gap-1">
-                  {!file.isSaved && (
-                    <button
-                      onClick={() => saveFileToDatabase(file)}
-                      disabled={isUploading}
-                      className="p-1.5 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors disabled:opacity-50"
-                      title="Save to Database"
-                    >
-                      <span className="text-xs">💾</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => moveFile(index, 'up')}
-                    disabled={index === 0}
-                    className="p-1.5 rounded-lg hover:bg-surface3 transition-colors disabled:opacity-30"
-                  >
-                    <span className="text-xs">↑</span>
-                  </button>
-                  <button
-                    onClick={() => moveFile(index, 'down')}
-                    disabled={index === audioFiles.length - 1}
-                    className="p-1.5 rounded-lg hover:bg-surface3 transition-colors disabled:opacity-30"
-                  >
-                    <span className="text-xs">↓</span>
-                  </button>
-
                   <button
                     onClick={() => startRename(file)}
-                    className="p-1.5 rounded-lg hover:bg-surface3 transition-colors"
+                    className="w-6 h-6 rounded hover:bg-surface3 flex items-center justify-center text-xs"
                     title="Rename"
                   >
-                    <span className="text-xs">✏️</span>
+                    ??
                   </button>
-
                   <button
                     onClick={() => exportFile(file)}
                     disabled={isConverting}
-                    className="p-1.5 rounded-lg hover:bg-surface3 transition-colors disabled:opacity-50"
+                    className="w-6 h-6 rounded hover:bg-surface3 flex items-center justify-center text-xs disabled:opacity-50"
                     title="Export"
                   >
-                    <span className="text-xs">�</span>
+                    ??
                   </button>
-
                   <button
                     onClick={() => deleteFile(file.id)}
-                    className="p-1.5 rounded-lg hover:bg-danger/10 transition-colors text-danger-light"
+                    className="w-6 h-6 rounded hover:bg-danger/20 flex items-center justify-center text-xs text-danger-light"
                     title="Delete"
                   >
-                    <span className="text-xs">🗑️</span>
+                    ??
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isRecording && audioFiles.length === 0 && (
-        <div className="text-center text-tx3 text-sm space-y-2 py-12">
-          <p className="text-4xl mb-4">🎙️</p>
-          <p>Click the microphone button to start recording</p>
-          <p>Or import audio files</p>
-          <p className="text-xs">Supported formats: WebM, MP3, WAV, OGG</p>
         </div>
       )}
     </>

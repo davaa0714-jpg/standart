@@ -41,10 +41,8 @@ export default async function DirectorLayout({ children }: { children: React.Rea
       .eq('profile_id', user.id)
       .eq('is_read', false)
     unreadCount = result.count ?? 0
-    console.log('NOTIFICATION DEBUG:', { userId: user.id, unreadCount, result })
   } catch (err) {
     // notifications table doesn't exist yet
-    console.log('Notifications table not found:', err)
   }
 
   return (

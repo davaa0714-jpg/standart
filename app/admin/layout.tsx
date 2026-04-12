@@ -47,8 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', user.id)
     .eq('is_read', false)
-  console.log('ADMIN NOTIFICATION DEBUG:', { userId: user.id, unreadCount, notifData })
-
+  
   return (
     <ToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
