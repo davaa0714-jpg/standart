@@ -28,7 +28,7 @@ export function AdminSidebar({
     { label: 'Хурлын жагсаалт', href: '/admin/meetings', icon: '📝' },
     { label: 'Үүрэг даалгавар', href: '/admin/tasks', icon: '📅' },
     { label: 'Баримлат хянах', href: '/admin/biyelelt', icon: '📁' },
-    { label: 'Дуу хураах', href: '/recorder', icon: '🎙️' },
+    { label: 'Дуу хураах', href: '/admin/recorder', icon: '🎙️' },
   ]
 
   const bottomItems: SidebarItem[] = [

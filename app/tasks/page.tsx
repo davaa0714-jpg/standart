@@ -1,6 +1,5 @@
 'use client'
 
-// Manager tasks page
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -8,11 +7,11 @@ import { StatusPill, TypeTag, PriorityDot, ProgressBar, Badge } from '@/componen
 import { PRIORITY_LABELS } from '@/types/database'
 import type { TaskFull, Profile } from '@/types/database'
 
-export default function ManagerTasksPage() {
+export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskFull[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'new' | 'in_progress' | 'submitted' | 'reviewing' | 'done' | 'overdue'>('all')
+  const [filter, setFilter] = useState<'all' | 'new' | 'in_progress' | 'done' | 'overdue'>('all')
   const [search, setSearch] = useState('')
 
   const supabase = createClient()
@@ -26,11 +25,10 @@ export default function ManagerTasksPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Load tasks assigned by manager AND tasks submitted for review
+      // Load tasks
       const { data: tasksData } = await supabase
         .from('tasks_full')
         .select('*')
-        .or(`assigned_by.eq.${user.id},status.eq.submitted`)
         .order('deadline', { ascending: true })
 
       setTasks(tasksData || [])
@@ -54,7 +52,7 @@ export default function ManagerTasksPage() {
       <div className="max-w-[1200px] mx-auto p-6">
         <div className="text-center py-16 text-tx3">
           <div className="text-4xl mb-3">Loading...</div>
-          <div className="text-sm">Manager tasks loading...</div>
+          <div className="text-sm">Data loading...</div>
         </div>
       </div>
     )
@@ -64,28 +62,9 @@ export default function ManagerTasksPage() {
     <div className="max-w-[1200px] mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <div className="text-xs text-tx3 mb-1">Manager / Uureg</div>
-        <h1 className="text-xl font-bold">Uureg ogson + Shalgah daalgavaruud</h1>
-        <p className="text-sm text-tx2 mt-0.5">Tand ogson + ajilchin ilgeesen daalgavaruud</p>
-      </div>
-
-      {/* Export Button */}
-      <div className="mb-6 flex gap-3">
-        <button className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-light transition-colors">
-          <Link href="/projects/new" className="flex items-center gap-2">
-            <span>+</span> Shine Turel Ehluuleh
-          </Link>
-        </button>
-        <button className="px-4 py-2 bg-accent/20 text-accent rounded-lg text-sm font-medium hover:bg-accent/30 transition-colors">
-          <Link href="/projects" className="flex items-center gap-2">
-            <span>+</span> Tureluud
-          </Link>
-        </button>
-        <button className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-light transition-colors">
-          <Link href="/projects/export" className="flex items-center gap-2">
-            <span>+</span> Export Excel
-          </Link>
-        </button>
+        <div className="text-xs text-tx3 mb-1">Nuur / Uureg</div>
+        <h1 className="text-xl font-bold">Uureg daalgavaruud</h1>
+        <p className="text-sm text-tx2 mt-0.5">Buurtgiin uuriin daalgavaruud</p>
       </div>
 
       {/* Filters */}
@@ -103,10 +82,8 @@ export default function ManagerTasksPage() {
           <div className="flex gap-2">
             {[
               { key: 'all', label: 'Buud' },
-              { key: 'new', label: 'Shine' },
+              { key: 'pending', label: 'Khuleelt' },
               { key: 'in_progress', label: 'Guitsetgej baina' },
-              { key: 'submitted', label: 'Ilgeesen' },
-              { key: 'reviewing', label: 'Shalgaj baina' },
               { key: 'done', label: 'Duussan' },
               { key: 'overdue', label: 'Khetrsen' }
             ].map(({ key, label }) => (
@@ -115,7 +92,7 @@ export default function ManagerTasksPage() {
                 onClick={() => setFilter(key as any)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === key
-                    ? 'bg-accent text-white'
+                    ? 'bg-primary text-white'
                     : 'bg-surface2 text-tx2 hover:bg-surface3'
                 }`}
               >
@@ -130,15 +107,15 @@ export default function ManagerTasksPage() {
       <div className="flex flex-col gap-3">
         {!filteredTasks.length ? (
           <div className="text-center py-16 text-tx3">
-            <div className="text-4xl mb-3">No tasks found</div>
-            <div className="text-sm">No tasks match your criteria</div>
+            <div className="text-4xl mb-3"> </div>
+            <div className="text-sm">Uureg oldsongui</div>
           </div>
         ) : (
           filteredTasks.map((task) => (
             <Link
               key={task.id}
               href={`/tasks/${task.id}`}
-              className="block bg-surface border border-border rounded-lg p-4 hover:border-accent/50 transition-colors"
+              className="block bg-surface border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -150,9 +127,9 @@ export default function ManagerTasksPage() {
                   <h3 className="font-medium text-tx truncate mb-1">{task.title}</h3>
                   <p className="text-sm text-tx2 line-clamp-2 mb-2">{task.description}</p>
                   <div className="flex items-center gap-4 text-xs text-tx3">
-                    <span>{task.assignee_name ?? 'N/A'}</span>
+                    <span>{task.assignee_name ?? '??'}</span>
                     <span className="font-mono">{task.deadline}</span>
-                    {task.meeting_title && <span>Meeting: {task.meeting_title}</span>}
+                    {task.meeting_title && <span> : {task.meeting_title}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
@@ -167,10 +144,10 @@ export default function ManagerTasksPage() {
         )}
       </div>
 
-      {/* Manager Stats */}
+      {/* Stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total', value: tasks.length, color: 'text-accent-light' },
+          { label: 'Total', value: tasks.length, color: 'text-primary-light' },
           { label: 'Pending', value: tasks.filter(t => t.status === 'new').length, color: 'text-warn-light' },
           { label: 'Done', value: tasks.filter(t => t.status === 'done').length, color: 'text-success-light' },
           { label: 'Overdue', value: tasks.filter(t => t.status === 'overdue').length, color: 'text-danger-light' }

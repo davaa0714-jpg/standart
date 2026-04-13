@@ -49,15 +49,16 @@ export default async function DirectorLayout({ children }: { children: React.Rea
     <ToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
         <DirectorSidebar
-          orgName={profile?.org_id ? 'Газрын Харилцааны Алба' : undefined}
+          orgName={profile?.org_id ? ' ' : undefined}
           overdueCount={overdueCount ?? 0}
+          unreadCount={unreadCount}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header
             profile={profile}
-            unreadCount={unreadCount ?? 0}
+            unreadCount={unreadCount}
           />
-          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn relative">
+          <main className="flex-1 overflow-y-auto p-6 animate-fadeIn">
             {children}
           </main>
         </div>

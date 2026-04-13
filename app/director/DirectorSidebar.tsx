@@ -28,7 +28,7 @@ export function DirectorSidebar({
     { label: 'Хурлын жагсаалт', href: '/director/meetings', icon: '📋' },
     { label: 'Үүрэг даалгавар', href: '/director/tasks', icon: '✅' },
     { label: 'Биелэлт хянах', href: '/director/biyelelt', icon: '📈' },
-    { label: 'Дуу хураах', href: '/recorder', icon: '🎙️' },
+    { label: 'Дуу хураах', href: '/director/recorder', icon: '🎙️' },
   ]
 
   const bottomItems: SidebarItem[] = [
